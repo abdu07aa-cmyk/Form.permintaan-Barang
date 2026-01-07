@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Form Permintaan Barang</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{font-family:Arial;padding:10px;background:#f4f6f8}
+input,select,button{padding:6px;margin:4px;width:100%}
+table{width:100%;border-collapse:collapse;margin-top:10px;background:#fff}
+th,td{border:1px solid #ccc;padding:6px;text-align:center;font-size:12px}
+th{background:#eaeaea}
+.btn{background:#007bff;color:#fff;border:none;border-radius:4px}
+.btn-red{background:#dc3545;color:#fff;border:none;border-radius:4px}
+.btn-green{background:#28a745;color:#fff;border:none;border-radius:4px}
+</style>
+</head>
+
+<body>
+
+<h3>Form Permintaan Barang</h3>
+
+<label>Tanggal</label>
+<input type="date" id="tanggal">
+
+<label>Nama Brand</label>
+<input type="text" id="brand" placeholder="Nama Brand">
+
+<h4>Detail Barang</h4>
+<table id="inputTable">
+<tr>
+<th>Jenis</th>
+<th>Size</th>
+<th>Paper</th>
+<th>Permintaan</th>
+<th>Kirim</th>
+<th>Aksi</th>
+</tr>
+</table>
+
+<button class="btn" onclick="tambahBaris()">+ Tambah Barang</button>
+<button class="btn" onclick="simpanData()">Simpan</button>
+<button class="btn-green" onclick="exportExcel()">Export Excel</button>
+
+<h3>Data Tersimpan</h3>
+<table id="dataTable">
+<tr>
+<th>Tanggal</th>
+<th>Brand</th>
+<th>Jenis</th>
+<th>Size</th>
+<th>Paper</th>
+<th>Permintaan</th>
+<th>Kirim</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+</table>
+
+<script>
+const jenisList=["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER"];
+const sizeList=["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
+const paperList=["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES","60 LEAVES"];
+
+let lastValue = {}; // SIMPAN INPUT TERAKHIR
+
+function tambahBaris(){
+ const table=document.getElementById("inputTable");
+ const row=table.insertRow(-1);
+
+ row.innerHTML=`
+ <td><select>${opt(jenisList,lastValue.jenis)}</select></td>
+ <td><select>${opt(sizeList,lastValue.size)}</select></td>
+ <td><select>${opt(paperList,lastValue.paper)}</select></td>
+ <td><input type="number" value="${lastValue.req||""}" oninput="autoKirim(this)"></td>
+ <td><input type="number" value="${lastValue.kirim||""}"></td>
+ <td><button class="btn-red" onclick="this.parentElement.parentElement.remove()">Hapus</button></td>
+ `;
+}
+
+function opt(list,selected){
+ return `<option value="">-- pilih --</option>`+
+ list.map(v=>`<option ${v==selected?"selected":""}>${v}</option>`).join("");
+}
+
+function autoKirim(el){
+ el.parentElement.nextElementSibling.firstChild.value = el.value;
+}
+
+function simpanData(){
+ const tanggal=document.getElementById("tanggal").value;
+ const brand=document.getElementById("brand").value;
+ const rows=document.querySelectorAll("#inputTable tr");
+
+ if(!tanggal||!brand){alert("Tanggal & Brand wajib");return;}
+
+ for(let i=1;i<rows.length;i++){
+   const e=rows[i].querySelectorAll("select,input");
+   if(!e[0].value)continue;
+
+   lastValue={
+     jenis:e[0].value,
+     size:e[1].value,
+     paper:e[2].value,
+     req:e[3].value,
+     kirim:e[4].value
+   };
+
+   let status = e[4].value>=e[3].value?"Lengkap":"Kurang";
+
+   document.getElementById("dataTable").insertRow(-1).innerHTML=`
+   <td>${tanggal}</td>
+   <td>${brand}</td>
+   <td>${e[0].value}</td>
+   <td>${e[1].value}</td>
+   <td>${e[2].value}</td>
+   <td>${e[3].value}</td>
+   <td>${e[4].value}</td>
+   <td>${status}</td>
+   <td><button class="btn-red" onclick="this.parentElement.parentElement.remove()">Hapus</button></td>`;
+ }
+
+ document.getElementById("inputTable").innerHTML=`
+ <tr><th>Jenis</th><th>Size</th><th>Paper</th><th>Permintaan</th><th>Kirim</th><th>Aksi</th></tr>`;
+}
+
+function exportExcel(){
+ let t=document.getElementById("dataTable");
+ if(t.rows.length<=1){alert("Data kosong");return;}
+ let d=[];
+ for(let i=1;i<t.rows.length;i++){
+  let r=t.rows[i];
+  d.push({
+   Tanggal:r.cells[0].innerText,
+   Brand:r.cells[1].innerText,
+   Jenis:r.cells[2].innerText,
+   Size:r.cells[3].innerText,
+   Paper:r.cells[4].innerText,
+   Permintaan:r.cells[5].innerText,
+   Kirim:r.cells[6].innerText,
+   Status:r.cells[7].innerText
+  });
+ }
+ let wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),"Data");
+ XLSX.writeFile(wb,"Permintaan_Barang.xlsx");
+}
+</script>
+<!-- TOMBOL KIRIM -->
+<button type="button" onclick="prosesKirim()">KIRIM</button>
+<script>
+// ===== KIRIM WHATSAPP DARI DATA TERSIMPAN =====
+function kirimWA(){
+  const table = document.getElementById("dataTable");
+  const rows  = table.querySelectorAll("tr");
+
+  if(rows.length <= 1){
+    alert("Belum ada data tersimpan");
+    return;
+  }
+
+  let header = rows[1].cells;
+  let tanggal = header[0].innerText;
+  let brand   = header[1].innerText;
+
+  let detail = "";
+for(let i=1;i<rows.length;i++){
+    let c = rows[i].cells;
+    detail += `• ${c[2].innerText} | ${c[3].innerText} | ${c[4].innerText} | Qty ${c[5].innerText}\n`;
+  }
+
+  let pesan =
+`Permintaan Barang
+${tanggal} | ${brand}
+
+${detail}`;
+
+  let nomor = "628979502611";
+  let url = "https://wa.me/" + nomor + "?text=" + encodeURIComponent(pesan);
+
+  window.open(url, "_blank");
+}
+
+// ===== SEKALI KLIK =====
+function prosesKirim(){
+  simpanData(); // simpan dulu
+  kirimWA();    // lalu kirim WA
+}
+</script>
+</body>
+</html>
