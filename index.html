@@ -32,6 +32,8 @@ th{background:#eaeaea}
 <h4>Detail Barang</h4>
 <table id="inputTable">
 <tr>
+<th>Line</th>
+<th>OP</th>
 <th>Jenis</th>
 <th>Size</th>
 <th>Paper</th>
@@ -50,6 +52,8 @@ th{background:#eaeaea}
 <tr>
 <th>Tanggal</th>
 <th>Brand</th>
+<th>Line</th>
+<th>OP</th>
 <th>Jenis</th>
 <th>Size</th>
 <th>Paper</th>
@@ -61,17 +65,26 @@ th{background:#eaeaea}
 </table>
 
 <script>
-const jenisList=["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER"];
+const jenisList=["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
 const sizeList=["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
 const paperList=["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES","60 LEAVES"];
+const lineList=[1,2,3,4,5,6];
+const opList=[...Array(18)].map((_,i)=>i+1);
 
-let lastValue = {}; // SIMPAN INPUT TERAKHIR
+let lastValue={};
+
+function opt(list,selected){
+ return `<option value="">-- pilih --</option>`+
+ list.map(v=>`<option ${v==selected?"selected":""}>${v}</option>`).join("");
+}
 
 function tambahBaris(){
  const table=document.getElementById("inputTable");
  const row=table.insertRow(-1);
 
  row.innerHTML=`
+ <td><select>${opt(lineList,lastValue.line)}</select></td>
+ <td><select>${opt(opList,lastValue.op)}</select></td>
  <td><select>${opt(jenisList,lastValue.jenis)}</select></td>
  <td><select>${opt(sizeList,lastValue.size)}</select></td>
  <td><select>${opt(paperList,lastValue.paper)}</select></td>
@@ -79,11 +92,6 @@ function tambahBaris(){
  <td><input type="number" value="${lastValue.kirim||""}"></td>
  <td><button class="btn-red" onclick="this.parentElement.parentElement.remove()">Hapus</button></td>
  `;
-}
-
-function opt(list,selected){
- return `<option value="">-- pilih --</option>`+
- list.map(v=>`<option ${v==selected?"selected":""}>${v}</option>`).join("");
 }
 
 function autoKirim(el){
@@ -99,17 +107,19 @@ function simpanData(){
 
  for(let i=1;i<rows.length;i++){
    const e=rows[i].querySelectorAll("select,input");
-   if(!e[0].value)continue;
+   if(!e[2].value)continue;
 
    lastValue={
-     jenis:e[0].value,
-     size:e[1].value,
-     paper:e[2].value,
-     req:e[3].value,
-     kirim:e[4].value
+     line:e[0].value,
+     op:e[1].value,
+     jenis:e[2].value,
+     size:e[3].value,
+     paper:e[4].value,
+     req:e[5].value,
+     kirim:e[6].value
    };
 
-   let status = e[4].value>=e[3].value?"Lengkap":"Kurang";
+   let status = e[6].value>=e[5].value ? "Lengkap" : "Kurang";
 
    document.getElementById("dataTable").insertRow(-1).innerHTML=`
    <td>${tanggal}</td>
@@ -119,12 +129,17 @@ function simpanData(){
    <td>${e[2].value}</td>
    <td>${e[3].value}</td>
    <td>${e[4].value}</td>
+   <td>${e[5].value}</td>
+   <td>${e[6].value}</td>
    <td>${status}</td>
    <td><button class="btn-red" onclick="this.parentElement.parentElement.remove()">Hapus</button></td>`;
  }
 
  document.getElementById("inputTable").innerHTML=`
- <tr><th>Jenis</th><th>Size</th><th>Paper</th><th>Permintaan</th><th>Kirim</th><th>Aksi</th></tr>`;
+ <tr>
+ <th>Line</th><th>OP</th><th>Jenis</th><th>Size</th><th>Paper</th>
+ <th>Permintaan</th><th>Kirim</th><th>Aksi</th>
+ </tr>`;
 }
 
 function exportExcel(){
@@ -136,12 +151,14 @@ function exportExcel(){
   d.push({
    Tanggal:r.cells[0].innerText,
    Brand:r.cells[1].innerText,
-   Jenis:r.cells[2].innerText,
-   Size:r.cells[3].innerText,
-   Paper:r.cells[4].innerText,
-   Permintaan:r.cells[5].innerText,
-   Kirim:r.cells[6].innerText,
-   Status:r.cells[7].innerText
+   Line:r.cells[2].innerText,
+   OP:r.cells[3].innerText,
+   Jenis:r.cells[4].innerText,
+   Size:r.cells[5].innerText,
+   Paper:r.cells[6].innerText,
+   Permintaan:r.cells[7].innerText,
+   Kirim:r.cells[8].innerText,
+   Status:r.cells[9].innerText
   });
  }
  let wb=XLSX.utils.book_new();
@@ -149,46 +166,36 @@ function exportExcel(){
  XLSX.writeFile(wb,"Permintaan_Barang.xlsx");
 }
 </script>
-<!-- TOMBOL KIRIM -->
-<button type="button" onclick="prosesKirim()">KIRIM</button>
+
+<button class="btn-green" onclick="prosesKirim()">KIRIM WHATSAPP</button>
+
 <script>
-// ===== KIRIM WHATSAPP DARI DATA TERSIMPAN =====
 function kirimWA(){
-  const table = document.getElementById("dataTable");
-  const rows  = table.querySelectorAll("tr");
+ const rows=document.querySelectorAll("#dataTable tr");
+ if(rows.length<=1){alert("Data kosong");return;}
 
-  if(rows.length <= 1){
-    alert("Belum ada data tersimpan");
-    return;
-  }
+ let t=rows[1].cells[0].innerText;
+ let b=rows[1].cells[1].innerText;
+ let detail="";
 
-  let header = rows[1].cells;
-  let tanggal = header[0].innerText;
-  let brand   = header[1].innerText;
+ for(let i=1;i<rows.length;i++){
+  let c=rows[i].cells;
+  detail+=`• Line ${c[2].innerText} | OP ${c[3].innerText} | ${c[4].innerText} | Qty ${c[7].innerText}\n`;
+ }
 
-  let detail = "";
-for(let i=1;i<rows.length;i++){
-    let c = rows[i].cells;
-    detail += `• ${c[2].innerText} | ${c[3].innerText} | ${c[4].innerText} | Qty ${c[5].innerText}\n`;
-  }
-
-  let pesan =
-`Permintaan Barang
-${tanggal} | ${brand}
+ let pesan=`Permintaan Barang
+${t} | ${b}
 
 ${detail}`;
 
-  let nomor = "628979502611";
-  let url = "https://wa.me/" + nomor + "?text=" + encodeURIComponent(pesan);
-
-  window.open(url, "_blank");
+ window.open("https://wa.me/628979502611?text="+encodeURIComponent(pesan),"_blank");
 }
 
-// ===== SEKALI KLIK =====
 function prosesKirim(){
-  simpanData(); // simpan dulu
-  kirimWA();    // lalu kirim WA
+ simpanData();
+ kirimWA();
 }
 </script>
+
 </body>
 </html>
