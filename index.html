@@ -79,7 +79,7 @@ const brand      = document.getElementById('brand');
 
 const lineList  = ["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","MACHINE"];
 const opList    = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-const jenisList = ["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
+const jenisList = ["BOOKLET","FILTER WHITE","FILTER BROWN","FILTER PRINTED","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
 const sizeList  = ["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
 const paperList = ["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES","60 LEAVES"];
 
@@ -88,8 +88,12 @@ function opt(list){
         list.map(v=>`<option value="${v}">${v}</option>`).join('');
 }
 
-// ================= INPUT =================
+// ================= INPUT (AUTO COPY) =================
 function tambahBaris(){
+ let last = inputTable.rows.length > 1
+   ? inputTable.rows[inputTable.rows.length - 1].cells
+   : null;
+
  let r = inputTable.insertRow();
  r.innerHTML = `
   <td><select>${opt(lineList)}</select></td>
@@ -101,6 +105,15 @@ function tambahBaris(){
   <td><input type="number" min="0"></td>
   <td><button class="btn-red" onclick="this.closest('tr').remove()">Hapus</button></td>
  `;
+
+ // AUTO ISI DARI BARIS SEBELUMNYA
+ if(last){
+  r.cells[0].children[0].value = last[0].children[0].value;
+  r.cells[1].children[0].value = last[1].children[0].value;
+  r.cells[2].children[0].value = last[2].children[0].value;
+  r.cells[3].children[0].value = last[3].children[0].value;
+  r.cells[4].children[0].value = last[4].children[0].value;
+ }
 }
 
 // ================= SIMPAN =================
@@ -112,22 +125,18 @@ async function simpanData(){
 
  for(let i=1;i<inputTable.rows.length;i++){
   let c = inputTable.rows[i].cells;
-
-  if(!c[0].children[0].value || !c[2].children[0].value){
-   alert('Line dan Jenis wajib diisi');
-   return;
-  }
+  if(!c[0].children[0].value || !c[2].children[0].value) return;
 
   await sb.from('permintaan_barang').insert({
-   tanggal    : tanggal.value,
-   brand      : brand.value,
-   line       : c[0].children[0].value,
-   op         : c[1].children[0].value,
-   jenis      : c[2].children[0].value,
-   size       : c[3].children[0].value,
-   paper      : c[4].children[0].value,
-   permintaan : c[5].children[0].value,
-   kirim      : c[6].children[0].value
+   tanggal:tanggal.value,
+   brand:brand.value,
+   line:c[0].children[0].value,
+   op:c[1].children[0].value,
+   jenis:c[2].children[0].value,
+   size:c[3].children[0].value,
+   paper:c[4].children[0].value,
+   permintaan:c[5].children[0].value,
+   kirim:c[6].children[0].value
   });
  }
 
@@ -139,87 +148,46 @@ async function simpanData(){
 // ================= LOAD =================
 async function loadData(){
  dataTable.innerHTML = dataTable.rows[0].outerHTML;
-
- let {data} = await sb.from('permintaan_barang')
-  .select('*')
-  .order('created_at',{ascending:false});
-
+ let {data} = await sb.from('permintaan_barang').select('*').order('created_at',{ascending:false});
  data.forEach(d=>{
-  let r = dataTable.insertRow();
-  r.innerHTML = `
+  let r=dataTable.insertRow();
+  r.innerHTML=`
    <td>${d.tanggal}</td>
    <td>${d.brand}</td>
-   <td contenteditable>${d.line}</td>
-   <td contenteditable>${d.op}</td>
-   <td contenteditable>${d.jenis}</td>
-   <td contenteditable>${d.size}</td>
-   <td contenteditable>${d.paper}</td>
-   <td contenteditable>${d.permintaan}</td>
-   <td contenteditable>${d.kirim}</td>
-   <td>
-    <button class="btn" onclick="updateData(${d.id},this)">Update</button>
-    <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
-   </td>
-  `;
+   <td>${d.line}</td>
+   <td>${d.op}</td>
+   <td>${d.jenis}</td>
+   <td>${d.size}</td>
+   <td>${d.paper}</td>
+   <td>${d.permintaan}</td>
+   <td>${d.kirim}</td>
+   <td><button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button></td>`;
  });
-}
-
-// ================= UPDATE =================
-async function updateData(id,btn){
- let c = btn.closest('tr').cells;
- await sb.from('permintaan_barang').update({
-  line:c[2].innerText,
-  op:c[3].innerText,
-  jenis:c[4].innerText,
-  size:c[5].innerText,
-  paper:c[6].innerText,
-  permintaan:c[7].innerText,
-  kirim:c[8].innerText
- }).eq('id',id);
-
- alert('Data diperbarui');
 }
 
 // ================= HAPUS =================
 async function hapusData(id,btn){
- if(!confirm('Yakin hapus data?')) return;
+ if(!confirm('Yakin hapus?')) return;
  await sb.from('permintaan_barang').delete().eq('id',id);
  btn.closest('tr').remove();
 }
 
 // ================= EXCEL =================
 function exportExcel(){
- let wb = XLSX.utils.book_new();
- let ws = XLSX.utils.table_to_sheet(dataTable);
- XLSX.utils.book_append_sheet(wb, ws, "Permintaan");
- XLSX.writeFile(wb, "permintaan_barang.xlsx");
+ let wb=XLSX.utils.book_new();
+ let ws=XLSX.utils.table_to_sheet(dataTable);
+ XLSX.utils.book_append_sheet(wb,ws,"Permintaan");
+ XLSX.writeFile(wb,"permintaan_barang.xlsx");
 }
 
 // ================= WHATSAPP =================
 function kirimWA(){
- if(dataTable.rows.length<=1){
-  alert('Data kosong');
-  return;
- }
-
- let pesan = 'PERMINTAAN BARANG\n\n';
-
+ let pesan='PERMINTAAN BARANG\n\n';
  for(let i=1;i<dataTable.rows.length;i++){
   let c=dataTable.rows[i].cells;
-  pesan +=
-   `Tanggal : ${c[0].innerText}\n`+
-   `Brand   : ${c[1].innerText}\n`+
-   `Line ${c[2].innerText} | OP ${c[3].innerText}\n`+
-   `Item : ${c[4].innerText} ${c[5].innerText} ${c[6].innerText}\n`+
-   `Qty  : ${c[7].innerText} / ${c[8].innerText}\n\n`;
+  pesan+=`Line ${c[2].innerText} OP ${c[3].innerText}\n${c[4].innerText} ${c[5].innerText} ${c[6].innerText}\nQty ${c[7].innerText}/${c[8].innerText}\n\n`;
  }
-
- let nomor = '628979502611'; // ganti nomor tujuan
- window.open(
-  'https://api.whatsapp.com/send?phone='+nomor+
-  '&text='+encodeURIComponent(pesan),
-  '_blank'
- );
+ window.open('https://api.whatsapp.com/send?phone=628979502611&text='+encodeURIComponent(pesan));
 }
 
 // ================= INIT =================
