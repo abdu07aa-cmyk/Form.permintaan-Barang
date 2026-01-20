@@ -22,6 +22,7 @@ th{background:#eee}
 </head>
 
 <body>
+
 <h3>📦 Form Permintaan Barang</h3>
 
 <input type="date" id="tanggal">
@@ -72,13 +73,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ================= DATA =================
 const inputTable = document.getElementById('inputTable');
-const dataTable = document.getElementById('dataTable');
+const dataTable  = document.getElementById('dataTable');
+const tanggal    = document.getElementById('tanggal');
+const brand      = document.getElementById('brand');
 
-const jenisList=["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
-const sizeList=["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
-const paperList=["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES","60 LEAVES"];
-const lineList=["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","MACHINE"];
-const opList=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+const lineList  = ["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","MACHINE"];
+const opList    = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+const jenisList = ["BOOKLET","FILTER WHITE","FILTER BROWN","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
+const sizeList  = ["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
+const paperList = ["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES","60 LEAVES"];
 
 function opt(list){
  return `<option value="">-- pilih --</option>`+
@@ -94,40 +97,49 @@ function tambahBaris(){
   <td><select>${opt(jenisList)}</select></td>
   <td><select>${opt(sizeList)}</select></td>
   <td><select>${opt(paperList)}</select></td>
-  <td><input type="number"></td>
-  <td><input type="number"></td>
-  <td>
-    <button class="btn-red" onclick="this.parentElement.parentElement.remove()">Hapus</button>
-  </td>`;
+  <td><input type="number" min="0"></td>
+  <td><input type="number" min="0"></td>
+  <td><button class="btn-red" onclick="this.closest('tr').remove()">Hapus</button></td>
+ `;
 }
 
 // ================= SIMPAN =================
 async function simpanData(){
- let tgl = tanggal.value;
- let br = brand.value;
- if(!tgl || !br){ alert('Tanggal & Brand wajib'); return; }
+ if(!tanggal.value || !brand.value){
+  alert('Tanggal & Brand wajib diisi');
+  return;
+ }
 
  for(let i=1;i<inputTable.rows.length;i++){
   let c = inputTable.rows[i].cells;
+
+  if(!c[0].children[0].value || !c[2].children[0].value){
+   alert('Line dan Jenis wajib diisi');
+   return;
+  }
+
   await sb.from('permintaan_barang').insert({
-   tanggal:tgl,
-   brand:br,
-   line:c[0].children[0].value,
-   op:c[1].children[0].value,
-   jenis:c[2].children[0].value,
-   size:c[3].children[0].value,
-   paper:c[4].children[0].value,
-   permintaan:c[5].children[0].value,
-   kirim:c[6].children[0].value
+   tanggal    : tanggal.value,
+   brand      : brand.value,
+   line       : c[0].children[0].value,
+   op         : c[1].children[0].value,
+   jenis      : c[2].children[0].value,
+   size       : c[3].children[0].value,
+   paper      : c[4].children[0].value,
+   permintaan : c[5].children[0].value,
+   kirim      : c[6].children[0].value
   });
  }
+
  inputTable.innerHTML = inputTable.rows[0].outerHTML;
+ tambahBaris();
  loadData();
 }
 
 // ================= LOAD =================
 async function loadData(){
  dataTable.innerHTML = dataTable.rows[0].outerHTML;
+
  let {data} = await sb.from('permintaan_barang')
   .select('*')
   .order('created_at',{ascending:false});
@@ -145,15 +157,16 @@ async function loadData(){
    <td contenteditable>${d.permintaan}</td>
    <td contenteditable>${d.kirim}</td>
    <td>
-     <button class="btn" onclick="updateData(${d.id},this)">Update</button>
-     <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
-   </td>`;
+    <button class="btn" onclick="updateData(${d.id},this)">Update</button>
+    <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
+   </td>
+  `;
  });
 }
 
 // ================= UPDATE =================
 async function updateData(id,btn){
- let c = btn.parentElement.parentElement.cells;
+ let c = btn.closest('tr').cells;
  await sb.from('permintaan_barang').update({
   line:c[2].innerText,
   op:c[3].innerText,
@@ -163,14 +176,15 @@ async function updateData(id,btn){
   permintaan:c[7].innerText,
   kirim:c[8].innerText
  }).eq('id',id);
+
  alert('Data diperbarui');
 }
 
 // ================= HAPUS =================
 async function hapusData(id,btn){
- if(!confirm('Yakin hapus data ini?')) return;
+ if(!confirm('Yakin hapus data?')) return;
  await sb.from('permintaan_barang').delete().eq('id',id);
- btn.parentElement.parentElement.remove();
+ btn.closest('tr').remove();
 }
 
 // ================= EXCEL =================
@@ -183,7 +197,11 @@ function exportExcel(){
 
 // ================= WHATSAPP =================
 function kirimWA(){
- if(dataTable.rows.length<=1){alert('Data kosong');return;}
+ if(dataTable.rows.length<=1){
+  alert('Data kosong');
+  return;
+ }
+
  let pesan = 'PERMINTAAN BARANG\n\n';
 
  for(let i=1;i<dataTable.rows.length;i++){
@@ -196,117 +214,18 @@ function kirimWA(){
    `Qty  : ${c[7].innerText} / ${c[8].innerText}\n\n`;
  }
 
- let nomor='628XXXXXXXXXX';
+ let nomor = '628979502611'; // ganti nomor tujuan
  window.open(
-  'https://api.whatsapp.com/send?phone='+628979502611+
+  'https://api.whatsapp.com/send?phone='+nomor+
   '&text='+encodeURIComponent(pesan),
   '_blank'
  );
 }
 
+// ================= INIT =================
+tambahBaris();
 loadData();
 </script>
-</body>
-</html>
 
- for(let i=1;i<inputTable.rows.length;i++){
-  let c = inputTable.rows[i].cells;
-  await sb.from('permintaan_barang').insert({
-   tanggal:tgl,
-   brand:br,
-   line:c[0].children[0].value,
-   op:c[1].children[0].value,
-   jenis:c[2].children[0].value,
-   size:c[3].children[0].value,
-   paper:c[4].children[0].value,
-   permintaan:c[5].children[0].value,
-   kirim:c[6].children[0].value
-  });
- }
- inputTable.innerHTML = inputTable.rows[0].outerHTML;
- loadData();
-}
-
-// ================= LOAD =================
-async function loadData(){
- dataTable.innerHTML = dataTable.rows[0].outerHTML;
- let {data} = await sb.from('permintaan_barang')
-  .select('*')
-  .order('created_at',{ascending:false});
-
- data.forEach(d=>{
-  let r = dataTable.insertRow();
-  r.innerHTML = `
-   <td>${d.tanggal}</td>
-   <td>${d.brand}</td>
-   <td contenteditable>${d.line}</td>
-   <td contenteditable>${d.op}</td>
-   <td contenteditable>${d.jenis}</td>
-   <td contenteditable>${d.size}</td>
-   <td contenteditable>${d.paper}</td>
-   <td contenteditable>${d.permintaan}</td>
-   <td contenteditable>${d.kirim}</td>
-   <td>
-     <button class="btn" onclick="updateData(${d.id},this)">Update</button>
-     <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
-   </td>`;
- });
-}
-
-// ================= UPDATE =================
-async function updateData(id,btn){
- let c = btn.parentElement.parentElement.cells;
- await sb.from('permintaan_barang').update({
-  line:c[2].innerText,
-  op:c[3].innerText,
-  jenis:c[4].innerText,
-  size:c[5].innerText,
-  paper:c[6].innerText,
-  permintaan:c[7].innerText,
-  kirim:c[8].innerText
- }).eq('id',id);
- alert('Data diperbarui');
-}
-
-// ================= HAPUS =================
-async function hapusData(id,btn){
- if(!confirm('Yakin hapus data ini?')) return;
- await sb.from('permintaan_barang').delete().eq('id',id);
- btn.parentElement.parentElement.remove();
-}
-
-// ================= EXCEL =================
-function exportExcel(){
- let wb = XLSX.utils.book_new();
- let ws = XLSX.utils.table_to_sheet(dataTable);
- XLSX.utils.book_append_sheet(wb, ws, "Permintaan");
- XLSX.writeFile(wb, "permintaan_barang.xlsx");
-}
-
-// ================= WHATSAPP =================
-function kirimWA(){
- if(dataTable.rows.length<=1){alert('Data kosong');return;}
- let pesan = 'PERMINTAAN BARANG\n\n';
-
- for(let i=1;i<dataTable.rows.length;i++){
-  let c=dataTable.rows[i].cells;
-  pesan +=
-   `Tanggal : ${c[0].innerText}\n`+
-   `Brand   : ${c[1].innerText}\n`+
-   `Line ${c[2].innerText} | OP ${c[3].innerText}\n`+
-   `Item : ${c[4].innerText} ${c[5].innerText} ${c[6].innerText}\n`+
-   `Qty  : ${c[7].innerText} / ${c[8].innerText}\n\n`;
- }
-
- let nomor='628XXXXXXXXXX';
- window.open(
-  'https://api.whatsapp.com/send?phone='+628979502611+
-  '&text='+encodeURIComponent(pesan),
-  '_blank'
- );
-}
-
-loadData();
-</script>
 </body>
 </html>
