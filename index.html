@@ -18,6 +18,7 @@ th{background:#eee}
 .btn{background:#007bff;color:#fff;border:none;border-radius:4px}
 .btn-red{background:#dc3545;color:#fff;border:none;border-radius:4px}
 .btn-green{background:#28a745;color:#fff;border:none;border-radius:4px}
+.btn-yellow{background:#ffc107;color:#000;border:none;border-radius:4px}
 </style>
 </head>
 
@@ -88,7 +89,7 @@ function opt(list){
         list.map(v=>`<option value="${v}">${v}</option>`).join('');
 }
 
-// ================= INPUT (AUTO COPY) =================
+// ================= INPUT =================
 function tambahBaris(){
  let last = inputTable.rows.length > 1
    ? inputTable.rows[inputTable.rows.length - 1].cells
@@ -106,13 +107,10 @@ function tambahBaris(){
   <td><button class="btn-red" onclick="this.closest('tr').remove()">Hapus</button></td>
  `;
 
- // AUTO ISI DARI BARIS SEBELUMNYA
  if(last){
-  r.cells[0].children[0].value = last[0].children[0].value;
-  r.cells[1].children[0].value = last[1].children[0].value;
-  r.cells[2].children[0].value = last[2].children[0].value;
-  r.cells[3].children[0].value = last[3].children[0].value;
-  r.cells[4].children[0].value = last[4].children[0].value;
+  for(let i=0;i<=4;i++){
+   r.cells[i].children[0].value = last[i].children[0].value;
+  }
  }
 }
 
@@ -148,7 +146,10 @@ async function simpanData(){
 // ================= LOAD =================
 async function loadData(){
  dataTable.innerHTML = dataTable.rows[0].outerHTML;
- let {data} = await sb.from('permintaan_barang').select('*').order('created_at',{ascending:false});
+ let {data} = await sb.from('permintaan_barang')
+   .select('*')
+   .order('created_at',{ascending:false});
+
  data.forEach(d=>{
   let r=dataTable.insertRow();
   r.innerHTML=`
@@ -161,8 +162,28 @@ async function loadData(){
    <td>${d.paper}</td>
    <td>${d.permintaan}</td>
    <td>${d.kirim}</td>
-   <td><button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button></td>`;
+   <td>
+     <button class="btn-yellow" onclick="editData(${d.id},this)">Edit</button>
+     <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
+   </td>`;
  });
+}
+
+// ================= EDIT =================
+async function editData(id,btn){
+ let tr = btn.closest('tr');
+ let permintaan = prompt('Ubah Permintaan', tr.cells[7].innerText);
+ if(permintaan === null) return;
+
+ let kirim = prompt('Ubah Kirim', tr.cells[8].innerText);
+ if(kirim === null) return;
+
+ await sb.from('permintaan_barang')
+   .update({ permintaan, kirim })
+   .eq('id', id);
+
+ tr.cells[7].innerText = permintaan;
+ tr.cells[8].innerText = kirim;
 }
 
 // ================= HAPUS =================
