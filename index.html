@@ -49,7 +49,13 @@ th{background:#eee}
 <button class="btn-green" onclick="simpanData()">💾 Simpan</button>
 <button class="btn" onclick="exportExcel()">📄 Export Excel</button>
 <button class="btn" onclick="kirimWA()">📲 Kirim WhatsApp</button>
+<h4>🔍 Filter Data</h4>
 
+<input type="date" id="f_tanggal" placeholder="Filter Tanggal">
+<input type="text" id="f_brand" placeholder="Filter Brand">
+
+<button class="btn" onclick="filterData()">🔎 Filter</button>
+<button class="btn-red" onclick="loadData()">♻ Reset</button>
 <h4>Data Tersimpan</h4>
 <table id="dataTable">
 <tr>
@@ -73,6 +79,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ================= DATA =================
+const f_tanggal = document.getElementById('f_tanggal');
+const f_brand   = document.getElementById('f_brand');
 const inputTable = document.getElementById('inputTable');
 const dataTable  = document.getElementById('dataTable');
 const tanggal    = document.getElementById('tanggal');
@@ -168,7 +176,39 @@ async function loadData(){
    </td>`;
  });
 }
+async function filterData(){
+ dataTable.innerHTML = dataTable.rows[0].outerHTML;
 
+ let query = sb.from('permintaan_barang').select('*');
+
+ if(f_tanggal.value){
+   query = query.eq('tanggal', f_tanggal.value);
+ }
+
+ if(f_brand.value){
+   query = query.ilike('brand', `%${f_brand.value}%`);
+ }
+
+ let { data } = await query.order('created_at',{ascending:false});
+
+ data.forEach(d=>{
+  let r=dataTable.insertRow();
+  r.innerHTML=`
+   <td>${formatTanggal(d.tanggal)}</td>
+   <td>${d.brand}</td>
+   <td>${d.line}</td>
+   <td>${d.op}</td>
+   <td>${d.jenis}</td>
+   <td>${d.size}</td>
+   <td>${d.paper}</td>
+   <td>${d.permintaan}</td>
+   <td>${d.kirim}</td>
+   <td>
+     <button class="btn-yellow" onclick="editData(${d.id},this)">Edit</button>
+     <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
+   </td>`;
+ });
+}
 // ================= EDIT =================
 async function editData(id,btn){
  let tr = btn.closest('tr');
