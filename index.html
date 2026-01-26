@@ -49,13 +49,7 @@ th{background:#eee}
 <button class="btn-green" onclick="simpanData()">💾 Simpan</button>
 <button class="btn" onclick="exportExcel()">📄 Export Excel</button>
 <button class="btn" onclick="kirimWA()">📲 Kirim WhatsApp</button>
-<h4>🔍 Filter Data</h4>
 
-<input type="date" id="f_tanggal" placeholder="Filter Tanggal">
-<input type="text" id="f_brand" placeholder="Filter Brand">
-
-<button class="btn" onclick="filterData()">🔎 Filter</button>
-<button class="btn-red" onclick="loadData()">♻ Reset</button>
 <h4>Data Tersimpan</h4>
 <table id="dataTable">
 <tr>
@@ -73,20 +67,27 @@ th{background:#eee}
 </table>
 
 <script>
+  
+  function formatTanggal(tgl){
+  if(!tgl) return '';
+  const d = new Date(tgl);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
 // ================= SUPABASE =================
 const SUPABASE_URL = "https://gnpjzhwbjeidabxdturx.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGp6aHdiamVpZGFieGR0dXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3ODc4NTUsImV4cCI6MjA4MzM2Mzg1NX0.Lsdt0mC1MCPeUATPukRRnXFwEpsaQdNzs927086vxjY";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ================= DATA =================
-const f_tanggal = document.getElementById('f_tanggal');
-const f_brand   = document.getElementById('f_brand');
 const inputTable = document.getElementById('inputTable');
 const dataTable  = document.getElementById('dataTable');
 const tanggal    = document.getElementById('tanggal');
 const brand      = document.getElementById('brand');
 
-const lineList  = ["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","MACHINE"];
+const lineList  = ["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","TRAINING","MACHINE"];
 const opList    = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
 const jenisList = ["BOOKLET","FILTER WHITE","FILTER BROWN","FILTER PRINTED","DISPLAY","PLAT","MAGNET","DOUBLE TAPE","COVER","PAPER","GRINDER"];
 const sizeList  = ["1 1/4","SINGLE","KS","KSS","KSSS","SKS"];
@@ -161,7 +162,7 @@ async function loadData(){
  data.forEach(d=>{
   let r=dataTable.insertRow();
   r.innerHTML=`
-   <td>${d.tanggal}</td>
+<td>${formatTanggal(d.tanggal)}</td>
    <td>${d.brand}</td>
    <td>${d.line}</td>
    <td>${d.op}</td>
@@ -176,39 +177,7 @@ async function loadData(){
    </td>`;
  });
 }
-async function filterData(){
- dataTable.innerHTML = dataTable.rows[0].outerHTML;
 
- let query = sb.from('permintaan_barang').select('*');
-
- if(f_tanggal.value){
-   query = query.eq('tanggal', f_tanggal.value);
- }
-
- if(f_brand.value){
-   query = query.ilike('brand', `%${f_brand.value}%`);
- }
-
- let { data } = await query.order('created_at',{ascending:false});
-
- data.forEach(d=>{
-  let r=dataTable.insertRow();
-  r.innerHTML=`
-   <td>${formatTanggal(d.tanggal)}</td>
-   <td>${d.brand}</td>
-   <td>${d.line}</td>
-   <td>${d.op}</td>
-   <td>${d.jenis}</td>
-   <td>${d.size}</td>
-   <td>${d.paper}</td>
-   <td>${d.permintaan}</td>
-   <td>${d.kirim}</td>
-   <td>
-     <button class="btn-yellow" onclick="editData(${d.id},this)">Edit</button>
-     <button class="btn-red" onclick="hapusData(${d.id},this)">Hapus</button>
-   </td>`;
- });
-}
 // ================= EDIT =================
 async function editData(id,btn){
  let tr = btn.closest('tr');
@@ -243,7 +212,7 @@ function exportExcel(){
 
 // ================= WHATSAPP =================
 function kirimWA(){
- let pesan='PERMINTAAN BARANG\n\n';
+let pesan='PERMINTAAN BARANG\nTanggal: '+formatTanggal(tanggal.value)+'\n\n';
  for(let i=1;i<dataTable.rows.length;i++){
   let c=dataTable.rows[i].cells;
   pesan+=`Line ${c[2].innerText} OP ${c[3].innerText}\n${c[4].innerText} ${c[5].innerText} ${c[6].innerText}\nQty ${c[7].innerText}/${c[8].innerText}\n\n`;
