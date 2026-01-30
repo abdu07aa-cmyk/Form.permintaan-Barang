@@ -157,9 +157,15 @@ const sb=supabase.createClient(
 );  
   
 /* ========= DATA ========= */  
-const lineList=["LINE 1","LINE 2","LINE 3","LINE 4"];  
-const jenisList=["BOOKLET","FILTER","DISPLAY"];  
-let editId=null;  
+const lineList = ["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","TRAINING","MACHINE","GUDANG","QC"];
+const jenisList = ["BOOKLET";"FILTER PRINTED";"FILTER WHITE";"FILTER BROWN";"PAPERS";"COVER";"MAGNET";"PLAT";"DISPLAY"];
+
+// === DROPDOWN BARU ===
+const opList = ["OP-001","OP-002","OP-003"];
+const sizeList = ["SINGLE","1 1/4","KS","KSS","KSSS","SKS"];
+const paperList = ["32 LEAVES";"33 LEAVES";"35 LEAVES";"40 LEAVES";"42 LEAVES";"50 LEAVES";"51 LEAVES";"52 LEAVES"];
+
+let editId = null;
   
 /* ========= INPUT ========= */  
 function opt(arr){  
@@ -289,4 +295,4 @@ function kirimWA(){
 tanggal.valueAsDate=new Date();  
 tambahBaris();loadData();  
 </script>  </body>  
-</html> sdh ok, tinggal op, size paper dijadikan droftdown
+</html> 
