@@ -1,22 +1,16 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Form Permintaan Barang</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
+<title>Form Permintaan Barang</title><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Tahoma;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;padding:16px;padding-bottom:80px}
 .container{max-width:1400px;margin:auto}
 .header,.card{background:rgba(255,255,255,.95);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.1);margin-bottom:20px;padding:20px}
 .card-title{font-weight:700;color:#1e3a8a;margin-bottom:12px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
 .form-group label{font-weight:600;font-size:14px}
-.form-group input,.form-group select{width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:10px}
+.form-group input,.form-group select{width:100%;padding:10px;border:2px solid #e2e8f0;border-radius:10px}
 table{width:100%;border-collapse:collapse}
 th{background:#2563eb;color:#fff;padding:10px;font-size:13px}
 td{padding:8px;text-align:center;border-bottom:1px solid #e2e8f0}
@@ -29,248 +23,114 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
 .btn-small{padding:6px;font-size:12px}
 .btn-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
 .loading{text-align:center;padding:30px}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center}
-.modal.active{display:flex}
-.modal-content{background:#fff;padding:20px;border-radius:16px;width:100%;max-width:400px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#fff;padding:16px;border-radius:12px;opacity:0;transition:.3s}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .toast-success{border-left:4px solid #10b981}
 .toast-error{border-left:4px solid #ef4444}
-
-@media(max-width:768px){
-#inputTable thead{display:none}
-#inputTable tr{display:block;margin-bottom:16px;background:#f8fafc;border-radius:12px;padding:12px}
-#inputTable td{display:grid;grid-template-columns:120px 1fr;text-align:left;border:none;padding:6px 0}
-#inputTable td::before{font-weight:600;color:#334155}
-#inputTable td:nth-child(1)::before{content:"Line"}
-#inputTable td:nth-child(2)::before{content:"OP"}
-#inputTable td:nth-child(3)::before{content:"Jenis"}
-#inputTable td:nth-child(4)::before{content:"Size"}
-#inputTable td:nth-child(5)::before{content:"Paper"}
-#inputTable td:nth-child(6)::before{content:"Permintaan"}
-#inputTable td:nth-child(7)::before{content:"Kirim"}
-#inputTable td:nth-child(8)::before{content:"Aksi"}
-}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<div class="header">
+</style></head><body>
+<div class="container"><div class="header">
 <h2>📦 Form Permintaan Barang</h2>
 <p>Kelola permintaan barang</p>
-</div>
-
-<div class="card">
+</div><div class="card">
 <div class="form-row">
-<div class="form-group">
-<label>Tanggal</label>
-<input type="date" id="tanggal">
-</div>
-<div class="form-group">
-<label>Brand</label>
-<input type="text" id="brand">
-</div>
-</div>
-
-<div class="card-title">Detail Barang</div>
+<div class="form-group"><label>Tanggal</label><input type="date" id="tanggal"></div>
+<div class="form-group"><label>Brand</label><input type="text" id="brand"></div>
+</div><div class="card-title">Detail Barang</div>
 <table id="inputTable">
-<thead>
-<tr>
-<th>Line</th><th>OP</th><th>Jenis</th><th>Size</th><th>Paper</th>
-<th>Permintaan</th><th>Kirim</th><th>Aksi</th>
-</tr>
-</thead>
+<thead><tr>
+<th>Line</th><th>OP</th><th>Jenis</th><th>Size</th><th>Paper</th><th>Permintaan</th><th>Kirim</th><th>Aksi</th>
+</tr></thead>
 <tbody></tbody>
-</table>
-
-<button class="btn btn-primary" onclick="tambahBaris()">➕ Tambah Barang</button>
+</table><button class="btn btn-primary" onclick="tambahBaris()">➕ Tambah Barang</button>
 
 <div class="btn-group">
 <button class="btn btn-success" onclick="simpanData()">💾 Simpan</button>
 <button class="btn btn-warning" onclick="exportExcel()">📄 Export Excel</button>
 <button class="btn btn-primary" onclick="kirimWA()">📲 Kirim WA</button>
 </div>
+</div><div class="card">
+<div class="card-title">Filter Data</div>
+<div class="form-row">
+<input placeholder="Tanggal" id="fTanggal" type="date">
+<input placeholder="Brand" id="fBrand">
+<select id="fLine"></select>
+<select id="fOP"></select>
+<select id="fJenis"></select>
+<select id="fSize"></select>
+<select id="fPaper"></select>
 </div>
-
-<div class="card">
+</div><div class="card">
 <div class="card-title">Data Tersimpan</div>
 <div id="loadingState" class="loading" style="display:none">Memuat...</div>
 <table id="dataTable">
-<thead>
-<tr>
-<th>Tanggal</th><th>Brand</th><th>Line</th><th>OP</th>
-<th>Jenis</th><th>Size</th><th>Paper</th>
-<th>Permintaan</th><th>Kirim</th><th>Aksi</th>
-</tr>
-</thead>
+<thead><tr>
+<th>Tanggal</th><th>Brand</th><th>Line</th><th>OP</th><th>Jenis</th><th>Size</th><th>Paper</th><th>Permintaan</th><th>Kirim</th><th>Aksi</th>
+</tr></thead>
 <tbody></tbody>
 </table>
 </div>
-
-</div>
-
-<div class="modal" id="editModal">
-<div class="modal-content">
-<h3>Edit Data</h3>
-<input type="number" id="editPermintaan">
-<input type="number" id="editKirim">
-<button class="btn btn-primary" onclick="saveEdit()">Simpan</button>
-<button class="btn" onclick="closeEditModal()">Batal</button>
-</div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-/* === DOM === */
-const inputTable=document.getElementById('inputTable');
-const dataTable=document.getElementById('dataTable');
-const tanggal=document.getElementById('tanggal');
-const brand=document.getElementById('brand');
-const loadingState=document.getElementById('loadingState');
-
-/* === UTIL === */
-function toast(msg,type='success'){
-const t=document.getElementById('toast');
-t.textContent=msg;
-t.className='toast show toast-'+type;
-setTimeout(()=>t.classList.remove('show'),3000);
-}
-function formatTanggal(t){
-const d=new Date(t);
-return d.toLocaleDateString('id-ID');
-}
-
-/* === SUPABASE === */
+</div><div class="toast" id="toast"></div><script>
 const sb=supabase.createClient(
 "https://gnpjzhwbjeidabxdturx.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGp6aHdiamVpZGFieGR0dXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3ODc4NTUsImV4cCI6MjA4MzM2Mzg1NX0.Lsdt0mC1MCPeUATPukRRnXFwEpsaQdNzs927086vxjY"
 );
 
-/* === DATA LIST === */
+const inputTable=document.getElementById('inputTable');
+const dataTable=document.getElementById('dataTable');
+const loadingState=document.getElementById('loadingState');
+
 const lineList=["LINE 1","LINE 2","LINE 3","LINE 4","LINE 5","LINE 6","TRAINING","MACHINE","GUDANG","QC","PENGAWAS","LEADER","OFFICE"];
 const opList=["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"];
 const jenisList=["BOOKLET","FILTER PRINTED","FILTER WHITE","FILTER BROWN","PAPERS","COVER","MAGNET","PLAT","GRINDER","DOUBLE TAPE","DISPLAY","FILTER 21","FILTER 26","FILTER 30","FILTER 40","TRAPEZOID","HOLDER S","HOLDER M","HOLDER L","HOLDER 9X9","HOLDER 10X10","MIKA","STICKER MIKA","STICKER BULAT KECIL","STICKER BULAT BESAR","STICKER FILTER","TUBE","STRAW"];
 const sizeList=["SINGLE","1 1/4","KS","KSS","KSSS","SKS","70 MM","83 MM","84 MM","109 MM","110 MM","115 MM"];
 const paperList=["32 LEAVES","33 LEAVES","35 LEAVES","40 LEAVES","42 LEAVES","50 LEAVES","51 LEAVES","52 LEAVES"];
 
-let editId=null;
+const opt=a=>`<option value="">-- semua --</option>`+a.map(v=>`<option>${v}</option>`).join('');
 
-const opt=arr=>`<option value="">-- pilih --</option>`+arr.map(v=>`<option>${v}</option>`).join('');
+[fLine,fOP,fJenis,fSize,fPaper]=['fLine','fOP','fJenis','fSize','fPaper'].map(id=>document.getElementById(id));
+fLine.innerHTML=opt(lineList);
+fOP.innerHTML=opt(opList);
+fJenis.innerHTML=opt(jenisList);
+fSize.innerHTML=opt(sizeList);
+fPaper.innerHTML=opt(paperList);
 
-/* === INPUT === */
 function tambahBaris(){
 const r=inputTable.tBodies[0].insertRow();
-r.innerHTML=`
-<td><select>${opt(lineList)}</select></td>
-<td><select>${opt(opList)}</select></td>
-<td><select>${opt(jenisList)}</select></td>
-<td><select>${opt(sizeList)}</select></td>
-<td><select>${opt(paperList)}</select></td>
-<td><input type="number" min="0"></td>
-<td><input type="number" min="0"></td>
-<td><button class="btn btn-danger btn-small" onclick="this.closest('tr').remove()">🗑️</button></td>`;
+r.innerHTML=`<td><select>${opt(lineList)}</select></td><td><select>${opt(opList)}</select></td><td><select>${opt(jenisList)}</select></td><td><select>${opt(sizeList)}</select></td><td><select>${opt(paperList)}</select></td><td><input type=number></td><td><input type=number></td><td><button onclick="this.closest('tr').remove()">🗑️</button></td>`;
 }
 
-/* === SIMPAN === */
 async function simpanData(){
-if(!tanggal.value||!brand.value)return toast('Tanggal & Brand wajib','error');
+const t=tanggal.value,b=brand.value;
 for(const r of inputTable.tBodies[0].rows){
 const c=r.cells;
-await sb.from('permintaan_barang').insert({
-tanggal:tanggal.value,
-brand:brand.value,
-line:c[0].children[0].value,
-op:c[1].children[0].value,
-jenis:c[2].children[0].value,
-size:c[3].children[0].value,
-paper:c[4].children[0].value,
-permintaan:c[5].children[0].value||0,
-kirim:c[6].children[0].value||0
-});
+await sb.from('permintaan_barang').insert({tanggal:t,brand:b,line:c[0].children[0].value,op:c[1].children[0].value,jenis:c[2].children[0].value,size:c[3].children[0].value,paper:c[4].children[0].value,permintaan:c[5].children[0].value||0,kirim:c[6].children[0].value||0});
 }
-inputTable.tBodies[0].innerHTML='';
-tambahBaris();
-loadData();
-toast('Data tersimpan');
+inputTable.tBodies[0].innerHTML='';tambahBaris();loadData();
 }
 
-/* === LOAD === */
 async function loadData(){
 loadingState.style.display='block';
 dataTable.tBodies[0].innerHTML='';
-const {data}=await sb.from('permintaan_barang').select('*').order('created_at',{ascending:false});
+let q=sb.from('permintaan_barang').select('*').order('created_at',{ascending:false});
+if(fTanggal.value)q=q.eq('tanggal',fTanggal.value);
+if(fBrand.value)q=q.ilike('brand','%'+fBrand.value+'%');
+['line','op','jenis','size','paper'].forEach(k=>{const v=document.getElementById('f'+k.charAt(0).toUpperCase()+k.slice(1)).value;if(v)q=q.eq(k,v)});
+const {data}=await q;
 data.forEach(d=>{
 const r=dataTable.tBodies[0].insertRow();
-r.innerHTML=`
-<td>${formatTanggal(d.tanggal)}</td>
-<td>${d.brand}</td>
-<td>${d.line}</td>
-<td>${d.op}</td>
-<td>${d.jenis}</td>
-<td>${d.size}</td>
-<td>${d.paper}</td>
-<td>${d.permintaan}</td>
-<td>${d.kirim}</td>
-<td>
-<button onclick="openEdit(${d.id},${d.permintaan},${d.kirim})">✏️</button>
-<button onclick="hapus(${d.id},this)">🗑️</button>
-</td>`;
+r.innerHTML=`<td>${d.tanggal}</td><td>${d.brand}</td><td>${d.line}</td><td>${d.op}</td><td>${d.jenis}</td><td>${d.size}</td><td>${d.paper}</td><td>${d.permintaan}</td><td>${d.kirim}</td><td></td>`;
 });
 loadingState.style.display='none';
 }
 
-/* === EDIT === */
-function openEdit(id,p,k){
-editId=id;
-editPermintaan.value=p;
-editKirim.value=k;
-editModal.classList.add('active');
-}
-function closeEditModal(){editModal.classList.remove('active')}
-async function saveEdit(){
-await sb.from('permintaan_barang').update({
-permintaan:editPermintaan.value,
-kirim:editKirim.value
-}).eq('id',editId);
-closeEditModal();
-loadData();
-toast('Update berhasil');
-}
-
-/* === HAPUS === */
-async function hapus(id,btn){
-if(!confirm('Hapus data?'))return;
-await sb.from('permintaan_barang').delete().eq('id',id);
-btn.closest('tr').remove();
-toast('Data dihapus');
-}
-
-/* === EXCEL === */
-function exportExcel(){
-const wb=XLSX.utils.book_new();
-const ws=XLSX.utils.table_to_sheet(dataTable);
-XLSX.utils.book_append_sheet(wb,ws,'Data');
-XLSX.writeFile(wb,'permintaan_barang.xlsx');
-}
-
-/* === WA === */
 function kirimWA(){
-let pesan='PERMINTAAN BARANG\n\n';
-for(const r of dataTable.tBodies[0].rows){
-const c=r.cells;
-pesan+=`${c[2].innerText} ${c[4].innerText} Qty ${c[7].innerText}/${c[8].innerText}\n`;
-}
+let pesan=`PERMINTAAN BARANG\nTanggal: ${tanggal.value}\nBrand: ${brand.value}\n\n`;
+for(const r of dataTable.tBodies[0].rows){const c=r.cells;pesan+=`${c[2].innerText} | ${c[4].innerText} | ${c[7].innerText}/${c[8].innerText}\n`;}
 window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(pesan));
 }
 
-/* === INIT === */
-tanggal.valueAsDate=new Date();
-tambahBaris();
-loadData();
-</script>
+['fTanggal','fBrand','fLine','fOP','fJenis','fSize','fPaper'].forEach(id=>document.getElementById(id).addEventListener('change',loadData));
 
-</body>
+tanggal.valueAsDate=new Date();tambahBaris();loadData();
+</script></body>
 </html>
