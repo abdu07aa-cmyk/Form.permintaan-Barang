@@ -80,6 +80,7 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
   <div class="btn-group">
     <button class="btn btn-success" onclick="simpanData()">💾 Simpan</button>
     <button class="btn btn-primary" onclick="kirimWA()">📲 Kirim WA</button>
+    <button class="btn btn-warning" onclick="kirimExcel()">📊 Kirim Excel</button>
   </div>
 </div>
 
@@ -236,6 +237,48 @@ function kirimWA(){
 ['fTanggal','fLine','fOP','fJenis','fSize','fPaper']
   .forEach(id=>document.getElementById(id).addEventListener('change',loadData));
 fBrand.addEventListener('input',loadData);
+
+function kirimExcel(){
+  if(dataTable.tBodies[0].rows.length === 0){
+    alert('Tidak ada data untuk diexport');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [];
+
+  // header
+  wsData.push([
+    "Tanggal","Brand","Line","OP",
+    "Jenis","Size","Paper","Permintaan","Kirim"
+  ]);
+
+  // isi data dari tabel
+  for(const r of dataTable.tBodies[0].rows){
+    wsData.push([
+      r.cells[0].innerText,
+      r.cells[1].innerText,
+      r.cells[2].innerText,
+      r.cells[3].innerText,
+      r.cells[4].innerText,
+      r.cells[5].innerText,
+      r.cells[6].innerText,
+      r.cells[7].innerText,
+      r.cells[8].innerText
+    ]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Permintaan Barang");
+
+  const t = fTanggal.value || tanggal.value || 'ALL';
+  const b = fBrand.value || brand.value || 'ALL';
+
+  const filename = `Permintaan_Barang_${t}_${b}.xlsx`;
+
+  XLSX.writeFile(wb, filename);
+}
+
 
 tanggal.valueAsDate=new Date();
 tambahBaris();
