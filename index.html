@@ -138,8 +138,16 @@ fJenis.innerHTML = optFilter(jenisList);
 fSize.innerHTML  = optFilter(sizeList);
 fPaper.innerHTML = optFilter(paperList);
 
+
 function tambahBaris(){
-  const r = inputTable.tBodies[0].insertRow();
+  const tbody = inputTable.tBodies[0];
+  const lastRow = tbody.rows[tbody.rows.length - 1];
+
+  const r = tbody.insertRow();
+
+  const lastVal = i =>
+    lastRow ? lastRow.cells[i].children[0].value : "";
+
   r.innerHTML = `
     <td><select>${optInput(lineList)}</select></td>
     <td><select>${optInput(opList)}</select></td>
@@ -150,7 +158,16 @@ function tambahBaris(){
     <td><input type="number"></td>
     <td><button onclick="this.closest('tr').remove()">🗑️</button></td>
   `;
+
+  if(lastRow){
+    r.cells[0].children[0].value = lastVal(0);
+    r.cells[1].children[0].value = lastVal(1);
+    r.cells[2].children[0].value = lastVal(2);
+    r.cells[3].children[0].value = lastVal(3);
+    r.cells[4].children[0].value = lastVal(4);
+  }
 }
+
 
 async function simpanData(){
   if(!tanggal.value || !brand.value) return alert('Tanggal & Brand wajib diisi');
