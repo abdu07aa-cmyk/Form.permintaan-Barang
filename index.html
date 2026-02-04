@@ -9,6 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+  td[contenteditable="true"]{
+  background:#e0f2fe;
+  outline:2px solid #2563eb;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:'Segoe UI',Tahoma;
@@ -105,7 +109,7 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
       <tr>
         <th>Tanggal</th><th>Brand</th><th>Line</th><th>OP</th>
         <th>Jenis</th><th>Size</th><th>Paper</th>
-        <th>Permintaan</th><th>Kirim</th>
+        <th>Permintaan</th><th>Kirim</th><th>Aksi</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -115,6 +119,55 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
 </div>
 
 <script>
+  window.editRow = async function(btn){
+  const tr = btn.closest("tr");
+  const id = tr.dataset.id;
+  const tds = tr.querySelectorAll("td");
+
+  // ================= SAVE =================
+  if(btn.dataset.mode === "edit"){
+
+    const payload = {
+      line        : tds[2].innerText.trim(),
+      op          : tds[3].innerText.trim(),
+      jenis       : tds[4].innerText.trim(),
+      size        : tds[5].innerText.trim(),
+      paper       : tds[6].innerText.trim(),
+      permintaan  : Number(tds[7].innerText.trim()) || 0,
+      kirim       : Number(tds[8].innerText.trim()) || 0
+    };
+
+    const { error } = await sb
+      .from("permintaan_barang")
+      .update(payload)
+      .eq("id", id);
+
+    if(error){
+      alert(error.message);
+      return;
+    }
+
+    for(let i=2;i<=8;i++){
+      tds[i].contentEditable = "false";
+    }
+
+    btn.innerText = "✏️ Edit";
+    btn.dataset.mode = "";
+    btn.classList.remove("btn-success");
+    btn.classList.add("btn-warning");
+    return;
+  }
+
+  // ================= EDIT =================
+  for(let i=2;i<=8;i++){
+    tds[i].contentEditable = "true";
+  }
+
+  btn.innerText = "💾 Save";
+  btn.dataset.mode = "edit";
+  btn.classList.remove("btn-warning");
+  btn.classList.add("btn-success");
+}
 const sb = supabase.createClient(
   "https://gnpjzhwbjeidabxdturx.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGp6aHdiamVpZGFieGR0dXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3ODc4NTUsImV4cCI6MjA4MzM2Mzg1NX0.Lsdt0mC1MCPeUATPukRRnXFwEpsaQdNzs927086vxjY"
@@ -211,13 +264,26 @@ async function loadData(){
   const {data=[]} = await q;
 
   data.forEach(d=>{
-    const r=dataTable.tBodies[0].insertRow();
-    r.innerHTML=`
-      <td>${d.tanggal}</td><td>${d.brand}</td><td>${d.line}</td>
-      <td>${d.op}</td><td>${d.jenis}</td><td>${d.size}</td>
-      <td>${d.paper}</td><td>${d.permintaan}</td><td>${d.kirim}</td>
-    `;
-  });
+  const r=dataTable.tBodies[0].insertRow();
+  r.dataset.id = d.id;
+
+  r.innerHTML=`
+    <td>${d.tanggal}</td>
+    <td>${d.brand}</td>
+
+    <td contenteditable="false">${d.line}</td>
+    <td contenteditable="false">${d.op}</td>
+    <td contenteditable="false">${d.jenis}</td>
+    <td contenteditable="false">${d.size}</td>
+    <td contenteditable="false">${d.paper}</td>
+    <td contenteditable="false">${d.permintaan}</td>
+    <td contenteditable="false">${d.kirim}</td>
+
+    <td>
+      <button class="btn btn-warning" onclick="editRow(this)">✏️ Edit</button>
+    </td>
+  `;
+});
 
   loadingState.style.display='none';
 }
