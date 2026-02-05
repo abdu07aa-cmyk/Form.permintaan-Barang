@@ -331,47 +331,60 @@ function kirimWA(){
   .forEach(id=>document.getElementById(id).addEventListener('change',loadData));  
 fBrand.addEventListener('input',loadData);  
   
-function kirimExcel(){  
-  if(dataTable.tBodies[0].rows.length === 0){  
-    alert('Tidak ada data untuk diexport');  
-    return;  
-  }  
-  
-  const wb = XLSX.utils.book_new();  
-  const wsData = [];  
-  
-  // header  
-  wsData.push([  
-    "Tanggal","Brand","Line","OP",  
-    "Jenis","Size","Paper","Permintaan","Kirim"  
-  ]);  
-  
-  // isi data dari tabel  
-  const rows = Array.from(dataTable.tBodies[0].rows).reverse();
-for(const r of rows){
-    wsData.push([  
-      r.cells[0].dataset.tanggal || r.cells[0].innerText,  
-      r.cells[1].innerText,  
-      r.cells[2].innerText,  
-      r.cells[3].innerText,  
-      r.cells[4].innerText,  
-      r.cells[5].innerText,  
-      r.cells[6].innerText,  
-      r.cells[7].innerText,  
-      r.cells[8].innerText  
-    ]);  
-  }  
-  
-  const ws = XLSX.utils.aoa_to_sheet(wsData);  
-  XLSX.utils.book_append_sheet(wb, ws, "Permintaan Barang");  
-  
-  const t = fTanggal.value || tanggal.value || 'ALL';  
-  const b = fBrand.value || brand.value || 'ALL';  
-  
-  const filename = `Permintaan_Barang_${t}_${b}.xlsx`;  
-  
-  XLSX.writeFile(wb, filename);  
-}  
+function kirimExcel(){
+  if(dataTable.tBodies[0].rows.length === 0){
+    alert('Tidak ada data untuk diexport');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [];
+
+  wsData.push([
+    "Tanggal","Brand","Line","OP",
+    "Jenis","Size","Paper","Permintaan","Kirim"
+  ]);
+
+  // ambil data → array object
+  const rows = Array.from(dataTable.tBodies[0].rows).map(r => ({
+    tanggalRaw : r.cells[0].dataset.tanggal, // yyyy-mm-dd
+    tanggalID  : formatTanggalID(r.cells[0].dataset.tanggal),
+    brand      : r.cells[1].innerText,
+    line       : r.cells[2].innerText,
+    op         : r.cells[3].innerText,
+    jenis      : r.cells[4].innerText,
+    size       : r.cells[5].innerText,
+    paper      : r.cells[6].innerText,
+    permintaan : r.cells[7].innerText,
+    kirim      : r.cells[8].innerText
+  }));
+
+  // SORT: tanggal lama ➜ atas, terbaru ➜ bawah
+  rows.sort((a,b)=> new Date(a.tanggalRaw) - new Date(b.tanggalRaw));
+
+  // push ke excel
+  rows.forEach(d=>{
+    wsData.push([
+      d.tanggalID,   // dd/mm/yyyy
+      d.brand,
+      d.line,
+      d.op,
+      d.jenis,
+      d.size,
+      d.paper,
+      d.permintaan,
+      d.kirim
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  XLSX.utils.book_append_sheet(wb, ws, "Permintaan Barang");
+
+  const t = fTanggal.value || tanggal.value || 'ALL';
+  const b = fBrand.value || brand.value || 'ALL';
+
+  XLSX.writeFile(wb, `Permintaan_Barang_${t}_${b}.xlsx`);
+}
   function formatTanggalID(tgl){
   if(!tgl) return '';
   const d = new Date(tgl);
