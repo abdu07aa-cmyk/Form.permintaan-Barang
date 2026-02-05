@@ -274,7 +274,10 @@ async function loadData(){
   loadingState.style.display='block';  
   dataTable.tBodies[0].innerHTML='';  
   
-  let q = sb.from('permintaan_barang').select('*').order('created_at',{ascending:false});  
+  let q = sb.from('permintaan_barang')
+  .select('*')
+  .order('tanggal', { ascending: false })
+  .order('created_at', { ascending: false });
   if(fTanggal.value) q=q.eq('tanggal',fTanggal.value);  
   if(fBrand.value)   q=q.ilike('brand','%'+fBrand.value+'%');  
   if(fLine.value)    q=q.eq('line',fLine.value);  
