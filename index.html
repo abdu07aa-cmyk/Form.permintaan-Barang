@@ -38,6 +38,7 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
 .btn-warning{background:#f59e0b;color:#fff}  
 .btn-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}  
 .loading{text-align:center;padding:30px}  
+.btn-danger{background:#ef4444;color:#fff;margin-left:6px;}
 </style>  </head>  <body>  
 <div class="container">  <div class="header">  
   <h2>📦 Form Permintaan Barang</h2>  
@@ -91,56 +92,104 @@ td input,td select{width:100%;padding:6px;border-radius:8px}
     </thead>  
     <tbody></tbody>  
   </table>  
-</div>  </div>  <script>  
-  window.editRow = async function(btn){  
-  const tr = btn.closest("tr");  
-  const id = tr.dataset.id;  
-  const tds = tr.querySelectorAll("td");  
-  
-  // ================= SAVE =================  
-  if(btn.dataset.mode === "edit"){  
-  
-    const payload = {  
-      line        : tds[2].innerText.trim(),  
-      op          : tds[3].innerText.trim(),  
-      jenis       : tds[4].innerText.trim(),  
-      size        : tds[5].innerText.trim(),  
-      paper       : tds[6].innerText.trim(),  
-      permintaan  : Number(tds[7].innerText.trim()) || 0,  
-      kirim       : Number(tds[8].innerText.trim()) || 0  
-    };  
-  
-    const { error } = await sb  
-      .from("permintaan_barang")  
-      .update(payload)  
-      .eq("id", id);  
-  
-    if(error){  
-      alert(error.message);  
-      return;  
-    }  
-  
-    for(let i=2;i<=8;i++){  
-      tds[i].contentEditable = "false";  
-    }  
-  
-    btn.innerText = "✏️ Edit";  
-    btn.dataset.mode = "";  
-    btn.classList.remove("btn-success");  
-    btn.classList.add("btn-warning");  
-    return;  
-  }  
-  
-  // ================= EDIT =================  
-  for(let i=2;i<=8;i++){  
-    tds[i].contentEditable = "true";  
-  }  
-  
-  btn.innerText = "💾 Save";  
-  btn.dataset.mode = "edit";  
-  btn.classList.remove("btn-warning");  
-  btn.classList.add("btn-success");  
-}  
+</div>  </div>  <script>
+window.editRow = async function(btn){
+  const tr = btn.closest("tr");
+  const id = tr.dataset.id;
+  const tds = tr.querySelectorAll("td");
+
+  const toSelect = (list, val) =>
+    `<select>${list.map(v =>
+      `<option ${v==val?'selected':''}>${v}</option>`
+    ).join('')}</select>`;
+
+  const toInput = v => `<input type="number" value="${v}">`;
+
+  // ================= SAVE =================
+  if(btn.dataset.mode === "edit"){
+
+    const payload = {
+      line       : tds[2].querySelector("select").value,
+      op         : tds[3].querySelector("select").value,
+      jenis      : tds[4].querySelector("select").value,
+      size       : tds[5].querySelector("select").value,
+      paper      : tds[6].querySelector("select").value,
+      permintaan : Number(tds[7].querySelector("input").value) || 0,
+      kirim      : Number(tds[8].querySelector("input").value) || 0
+    };
+
+    const { error } = await sb
+      .from("permintaan_barang")
+      .update(payload)
+      .eq("id", id);
+
+    if(error){
+      alert(error.message);
+      return;
+    }
+
+    // balik ke text
+    tds[2].innerText = payload.line;
+    tds[3].innerText = payload.op;
+    tds[4].innerText = payload.jenis;
+    tds[5].innerText = payload.size;
+    tds[6].innerText = payload.paper;
+    tds[7].innerText = payload.permintaan;
+    tds[8].innerText = payload.kirim;
+
+    btn.innerText = "✏️ Edit";
+    btn.dataset.mode = "";
+    btn.classList.remove("btn-success");
+    btn.classList.add("btn-warning");
+
+    // hapus tombol delete
+    const del = tr.querySelector(".btn-danger");
+    if(del) del.remove();
+
+    return;
+  }
+
+  // ================= EDIT =================
+  tds[2].innerHTML = toSelect(lineList, tds[2].innerText);
+  tds[3].innerHTML = toSelect(opList, tds[3].innerText);
+  tds[4].innerHTML = toSelect(jenisList, tds[4].innerText);
+  tds[5].innerHTML = toSelect(sizeList, tds[5].innerText);
+  tds[6].innerHTML = toSelect(paperList, tds[6].innerText);
+  tds[7].innerHTML = toInput(tds[7].innerText);
+  tds[8].innerHTML = toInput(tds[8].innerText);
+
+  // tombol hapus
+  if(!tr.querySelector(".btn-danger")){
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn btn-danger";
+    delBtn.innerText = "🗑️ Hapus";
+    delBtn.onclick = () => hapusData(id, tr);
+    tds[9].appendChild(delBtn);
+  }
+
+  btn.innerText = "💾 Save";
+  btn.dataset.mode = "edit";
+  btn.classList.remove("btn-warning");
+  btn.classList.add("btn-success");
+}
+
+// ================= HAPUS =================
+async function hapusData(id, tr){
+  if(!confirm("Yakin hapus data ini?")) return;
+
+  const { error } = await sb
+    .from("permintaan_barang")
+    .delete()
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  tr.remove();
+}
+
 const sb = supabase.createClient(  
   "https://gnpjzhwbjeidabxdturx.supabase.co",  
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImducGp6aHdiamVpZGFieGR0dXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3ODc4NTUsImV4cCI6MjA4MzM2Mzg1NX0.Lsdt0mC1MCPeUATPukRRnXFwEpsaQdNzs927086vxjY"  
