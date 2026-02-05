@@ -290,7 +290,9 @@ async function loadData(){
   r.dataset.id = d.id;  
   
   r.innerHTML=`  
-    <td>${d.tanggal}</td>  
+    <td data-tanggal="${d.tanggal}">
+  ${formatTanggalID(d.tanggal)}
+</td>
     <td>${d.brand}</td>  
   
     <td contenteditable="false">${d.line}</td>  
@@ -342,9 +344,10 @@ function kirimExcel(){
   ]);  
   
   // isi data dari tabel  
-  for(const r of dataTable.tBodies[0].rows){  
+  const rows = Array.from(dataTable.tBodies[0].rows).reverse();
+for(const r of rows){
     wsData.push([  
-      r.cells[0].innerText,  
+      r.cells[0].dataset.tanggal || r.cells[0].innerText,  
       r.cells[1].innerText,  
       r.cells[2].innerText,  
       r.cells[3].innerText,  
@@ -366,7 +369,14 @@ function kirimExcel(){
   
   XLSX.writeFile(wb, filename);  
 }  
-  
+  function formatTanggalID(tgl){
+  if(!tgl) return '';
+  const d = new Date(tgl);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
   
 tanggal.valueAsDate=new Date();  
 tambahBaris();  
